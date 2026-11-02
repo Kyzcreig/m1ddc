@@ -39,7 +39,7 @@ typedef struct
 int             getAVServiceInfos(AVServiceInfos *infos, int max);
 void            releaseAVServiceInfos(AVServiceInfos *infos, int count);
 
-// Picks by list index ("1", "2", ...) or by EDID alphanumeric serial. NULL when nothing matches.
+// Picks by EDID alphanumeric serial (string match only). NULL when nothing matches.
 AVServiceInfos* selectAVService(AVServiceInfos *infos, int count, char *identifier);
 
 // Marks entries that are also CoreGraphics displays (by EDID identity against `displays`).

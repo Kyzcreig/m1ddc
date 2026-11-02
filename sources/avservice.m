@@ -73,14 +73,9 @@ static Boolean proxyIsExternal(io_service_t proxy) {
 }
 
 static IOReturn readEDID(IOAVServiceRef avService, UInt8 *edid) {
-    // Standard DDC2B EDID read: set the segment-0 word offset to 0, then read 128 bytes from 0x50.
-    UInt8 offset = 0;
-    IOReturn err = IOAVServiceWriteI2C(avService, EDID_I2C_ADDRESS, 0x00, &offset, 1);
-    if (err) {
-        return err;
-    }
-    usleep(DDC_WAIT);
-    err = IOAVServiceReadI2C(avService, EDID_I2C_ADDRESS, 0x00, edid, EDID_LENGTH);
+    // Standard DDC2B EDID read: 128 bytes from 0x50 at word offset 0. IOAVServiceReadI2C takes the
+    // offset itself, so no separate offset write is needed.
+    IOReturn err = IOAVServiceReadI2C(avService, EDID_I2C_ADDRESS, 0x00, edid, EDID_LENGTH);
     if (err) {
         return err;
     }
@@ -132,11 +127,8 @@ void releaseAVServiceInfos(AVServiceInfos *infos, int count) {
 }
 
 AVServiceInfos *selectAVService(AVServiceInfos *infos, int count, char *identifier) {
-    char *stop;
-    long number = strtol(identifier, &stop, 10);
-    if (*stop == '\0') {
-        return (number >= 1 && number <= count) ? infos + (number - 1) : NULL;
-    }
+    // Always matched as a string against the EDID alphanumeric serial: a serial that happens to be
+    // all digits must never be read as a list index.
     for (int i = 0; i < count; i++) {
         if (infos[i].alphNumSerial != nil && STR_EQ(identifier, infos[i].alphNumSerial.UTF8String)) {
             return infos + i;
